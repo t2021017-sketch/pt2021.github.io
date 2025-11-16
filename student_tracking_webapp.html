@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>學生離開時間同步系統</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f7f7f7; }
+    h1 { text-align: center; }
+    .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    label { font-weight: bold; }
+    input, select, button {
+      width: 100%; padding: 10px; margin-top: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 16px;
+    }
+    button { background: #007bff; color: white; cursor: pointer; }
+    button:hover { background: #0056c7; }
+    table { width: 100%; margin-top: 20px; border-collapse: collapse; }
+    th, td { padding: 10px; border-bottom: 1px solid #ddd; }
+    th { background: #eee; }
+    .danger { background: #d9534f; border: none; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>學生離開時間同步系統</h1>
+  <div class="container">
+
+    <label>選擇學生（1~31）</label>
+    <select id="studentSelect"></select>
+
+    <label>離開時間</label>
+    <input type="datetime-local" id="leaveTime" />
+
+    <button onclick="saveRecord()">紀錄離開時間</button>
+
+    <table>
+      <thead>
+        <tr>
+          <th>學生</th>
+          <th>離開時間</th>
+        </tr>
+      </thead>
+      <tbody id="recordTable"></tbody>
+    </table>
+
+    <button id="clearAllBtn" class="danger">全部清除離開時間</button>
+
+  </div>
+
+  <script>
+    // 初始化學生名單
+    const studentSelect = document.getElementById("studentSelect");
+    for (let i = 1; i <= 31; i++) {
+      const option = document.createElement("option");
+      option.value = i;
+      option.textContent = `學生 ${i}`;
+      studentSelect.appendChild(option);
+    }
+
+    // 儲存資料 → localStorage（讓兩位使用者同頁面即時看到更新）
+    function saveRecord() {
+      const student = studentSelect.value;
+      const time = document.getElementById("leaveTime").value;
+
+      if (!time) {
+        alert("請輸入離開時間！");
+        return;
+      }
+
+      const records = JSON.parse(localStorage.getItem("records") || "{}");
+      records[student] = time;
+      localStorage.setItem("records", JSON.stringify(records));
+
+      renderTable();
+    }
+
+    // 全部清除
+    function clearAll() {
+      if (confirm("確定要全部清除嗎？")) {
+        localStorage.removeItem("records");
+        renderTable();
+      }
+    }
+
+    // 即時更新表格
+    function renderTable() {
+      const records = JSON.parse(localStorage.getItem("records") || "{}");
+      const tbody = document.getElementById("recordTable");
+      tbody.innerHTML = "";
+
+      for (let i = 1; i <= 31; i++) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>學生 ${i}</td><td>${records[i] || "--"}</td>`;
+        tbody.appendChild(tr);
+      }
+    }
+
+    // 綁定按鈕
+    document.getElementById("clearAllBtn").addEventListener("click", clearAll);
+
+    // 監聽 localStorage 變動 → 讓兩位使用者自動同步
+    window.addEventListener("storage", () => {
+      renderTable();
+    });
+
+    // 初始載入
+    renderTable();
+  </script>
+</body>
+</html>
